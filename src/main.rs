@@ -16,7 +16,10 @@ use std::{
 use std::{hash::Hasher, io::BufReader};
 mod config;
 fn main() -> std::io::Result<()> {
-    let slice_count = split_file("urls.1G.txt")?;
+    let args: Vec<String> = std::env::args().collect();
+    let default_filename = String::from("urls.10G.txt");
+    let filename = args.get(1).unwrap_or(&default_filename);
+    let slice_count = split_file(&filename)?;
     let handles = read_slices(slice_count)?;
     let mut heap: BinaryHeap<Reverse<(usize, Vec<u8>)>> = BinaryHeap::new();
     for mut i in handles {
@@ -29,7 +32,7 @@ fn main() -> std::io::Result<()> {
     let mut res = heap.drain().collect::<Vec<_>>();
     res.sort();
 
-    for i in res.iter().take(5) {
+    for i in res.iter().take(3) {
         println!("{}", i.0 .0);
         println!("{}", String::from_utf8_lossy(&i.0 .1));
     }
