@@ -13,4 +13,5 @@ Cargo.lock
 **/*.rs.bk
 .ccls-cache
 a.out
-urls.txt
+urls.*.txt
+data
