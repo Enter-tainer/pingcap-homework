@@ -20,15 +20,7 @@ fn main() -> std::io::Result<()> {
     let default_filename = String::from("urls.10G.txt");
     let filename = args.get(1).unwrap_or(&default_filename);
     let slice_count = split_file(&filename)?;
-    let handles = read_slices(slice_count)?;
-    let mut heap: BinaryHeap<Reverse<(usize, Vec<u8>)>> = BinaryHeap::new();
-    for mut i in handles {
-        let mut sub_heap = process_slice(&mut i)?;
-        heap.append(&mut sub_heap);
-        while heap.len() > config::TOP_URL_COUNT {
-            heap.pop();
-        }
-    }
+    let mut heap = read_and_process_slices(slice_count)?;
     let mut res = heap.drain().collect::<Vec<_>>();
     res.sort();
 
@@ -44,11 +36,12 @@ fn split_file<P: AsRef<Path>>(input: P) -> std::io::Result<u64> {
     let meta = f.metadata()?;
     let file_size = meta.size();
     let slice_count: u64 = (file_size as f64 / SLICE_SIZE as f64).ceil() as u64;
+    let buffer_size: usize = config::WRITE_BUFFER_SIZE / slice_count as usize;
     let _err = fs::create_dir("data");
     let mut file_handles: Vec<BufWriter<File>> = Vec::new();
     for i in 0..slice_count {
         let f = File::create(format!("data/url{}", i))?;
-        file_handles.push(BufWriter::with_capacity(config::WRITE_BUFFER_SIZE, f));
+        file_handles.push(BufWriter::with_capacity(buffer_size, f));
     }
     let mut reader = BufReader::with_capacity(config::READ_BUFFER_SIZE, f);
     loop {
@@ -68,13 +61,20 @@ fn split_file<P: AsRef<Path>>(input: P) -> std::io::Result<u64> {
     Ok(slice_count)
 }
 
-fn read_slices(slice_count: u64) -> std::io::Result<Vec<BufReader<File>>> {
-    let mut file_handles: Vec<BufReader<File>> = Vec::new();
+fn read_and_process_slices(
+    slice_count: u64,
+) -> std::io::Result<BinaryHeap<Reverse<(usize, Vec<u8>)>>> {
+    let mut heap: BinaryHeap<Reverse<(usize, Vec<u8>)>> = BinaryHeap::new();
     for i in 0..slice_count {
         let f = File::open(format!("data/url{}", i))?;
-        file_handles.push(BufReader::with_capacity(config::SLICE_READ_BUFFER_SIZE, f));
+        let mut file_reader = BufReader::with_capacity(config::SLICE_READ_BUFFER_SIZE, f);
+        let mut sub_heap = process_slice(&mut file_reader)?;
+        heap.append(&mut sub_heap);
+        while heap.len() > config::TOP_URL_COUNT {
+            heap.pop();
+        }
     }
-    Ok(file_handles)
+    Ok(heap)
 }
 
 fn process_slice(

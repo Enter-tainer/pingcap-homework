@@ -15,3 +15,5 @@ Cargo.lock
 a.out
 urls.*.txt
 data
+heaptrack.*
+top-100-url
