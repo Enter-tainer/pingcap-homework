@@ -54,4 +54,32 @@
 ```
 内存超了, 使用 heaptrack 进行分析. 应该是写文件的缓存开的太大了. 
 
-改了, 为写缓存设置全局最大值. 调整后峰值内存占用为 800M, 恰为读写缓存的大小之和.
+改了(80d060cf93cf8cf9fc92c32ccaf83b9931ca4bbd), 为写缓存设置全局最大值. 调整后峰值内存占用为 800M, 恰为读写缓存的大小之和.
+
+测试结果如下
+
+```
+        Command being timed: "./top-100-url ./urls.10G.txt"
+        User time (seconds): 10.07
+        System time (seconds): 17.13
+        Percent of CPU this job got: 89%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 0:30.40
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 783676
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 3
+        Minor (reclaiming a frame) page faults: 1081449
+        Voluntary context switches: 86108
+        Involuntary context switches: 2866
+        Swaps: 0
+        File system inputs: 14294144
+        File system outputs: 19601184
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+```
