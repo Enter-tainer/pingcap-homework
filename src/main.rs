@@ -1,9 +1,13 @@
 use ahash::{AHashMap, AHasher};
 use config::SLICE_SIZE;
 use rayon::prelude::*;
+use std::cmp::Reverse;
+use std::collections::BinaryHeap;
+
 use std::{
     fs,
     io::{prelude::*, BufWriter},
+    path::Path,
 };
 use std::{
     fs::{read, File},
@@ -12,7 +16,28 @@ use std::{
 use std::{hash::Hasher, io::BufReader};
 mod config;
 fn main() -> std::io::Result<()> {
-    let f = File::open("urls.1G.txt")?;
+    let slice_count = split_file("urls.1G.txt")?;
+    let handles = read_slices(slice_count)?;
+    let mut heap: BinaryHeap<Reverse<(usize, Vec<u8>)>> = BinaryHeap::new();
+    for mut i in handles {
+        let mut sub_heap = process_slice(&mut i)?;
+        heap.append(&mut sub_heap);
+        while heap.len() > config::TOP_URL_COUNT {
+            heap.pop();
+        }
+    }
+    let mut res = heap.drain().collect::<Vec<_>>();
+    res.sort();
+
+    for i in res.iter().take(5) {
+        println!("{}", i.0 .0);
+        println!("{}", String::from_utf8_lossy(&i.0 .1));
+    }
+    Ok(())
+}
+
+fn split_file<P: AsRef<Path>>(input: P) -> std::io::Result<u64> {
+    let f = File::open(input)?;
     let meta = f.metadata()?;
     let file_size = meta.size();
     let slice_count: u64 = (file_size as f64 / SLICE_SIZE as f64).ceil() as u64;
@@ -37,5 +62,44 @@ fn main() -> std::io::Result<()> {
         writer.write_all(&buf)?;
     }
 
-    Ok(())
+    Ok(slice_count)
+}
+
+fn read_slices(slice_count: u64) -> std::io::Result<Vec<BufReader<File>>> {
+    let mut file_handles: Vec<BufReader<File>> = Vec::new();
+    for i in 0..slice_count {
+        let f = File::open(format!("data/url{}", i))?;
+        file_handles.push(BufReader::with_capacity(config::SLICE_READ_BUFFER_SIZE, f));
+    }
+    Ok(file_handles)
+}
+
+fn process_slice(
+    reader: &mut BufReader<File>,
+) -> std::io::Result<BinaryHeap<Reverse<(usize, Vec<u8>)>>> {
+    let mut map: AHashMap<Vec<u8>, usize> = AHashMap::new();
+    loop {
+        let mut buf: Vec<u8> = Vec::new();
+        let len = reader.read_until(b'\n', &mut buf)?;
+        if len == 0 {
+            break;
+        }
+        let cnt = map.entry(buf).or_insert(0);
+        *cnt += 1;
+    }
+    let mut heap = BinaryHeap::new();
+    for (k, v) in map.drain() {
+        if heap.len() < config::TOP_URL_COUNT {
+            heap.push(Reverse((v, k)));
+        } else {
+            let top = heap.peek();
+            if let Some(top) = top {
+                if top.0 .0 < v {
+                    heap.pop();
+                    heap.push(Reverse((v, k)));
+                }
+            }
+        }
+    }
+    Ok(heap)
 }
