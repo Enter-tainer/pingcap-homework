@@ -1,6 +1,5 @@
 use ahash::{AHashMap, AHasher};
 use config::SLICE_SIZE;
-use rayon::prelude::*;
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 
@@ -9,10 +8,7 @@ use std::{
     io::{prelude::*, BufWriter},
     path::Path,
 };
-use std::{
-    fs::{read, File},
-    os::unix::prelude::MetadataExt,
-};
+use std::{fs::File, os::unix::prelude::MetadataExt};
 use std::{hash::Hasher, io::BufReader};
 mod config;
 fn main() -> std::io::Result<()> {
