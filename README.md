@@ -88,4 +88,34 @@
         Exit status: 0
 ```
 
+30G 的测试结果, 内存没有超:
+
+```
+        Command being timed: "./top-100-url ./urls.txt"
+        User time (seconds): 28.70
+        System time (seconds): 60.12
+        Percent of CPU this job got: 73%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 2:00.56
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 783504
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 4
+        Minor (reclaiming a frame) page faults: 4413347
+        Voluntary context switches: 105851
+        Involuntary context switches: 6297
+        Swaps: 0
+        File system inputs: 73405048
+        File system outputs: 58817048
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+```
+
 看起来是 IO Bound, system time 好长.
+
+
