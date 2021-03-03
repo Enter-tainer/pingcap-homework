@@ -24,6 +24,8 @@ cargo build --release
 
 ## 测试结果
 
+由于电脑性能问题，以下为10G数据的测试
+
 ```
 ❯ hyperfine -w 1 -m 3 ./top-100-url
 Benchmark #1: ./top-100-url
