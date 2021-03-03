@@ -20,9 +20,7 @@ fn main() -> std::io::Result<()> {
     let mut res = heap.drain().collect::<Vec<_>>();
     res.sort();
 
-    for i in res.iter().take(3) {
-        // To be friendly to human, we only output top 3 urls.
-        // But you can modify it up to 100 if you like.
+    for i in res.iter().take(100) {
         println!("{}", i.0 .0);
         println!("{}", String::from_utf8_lossy(&i.0 .1));
     }
