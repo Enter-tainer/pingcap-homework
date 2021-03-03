@@ -1,15 +1,16 @@
-use ahash::{AHashMap, AHasher};
+use ahash::AHashMap;
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 
+use std::io::BufReader;
 use std::{
     fs,
     io::{prelude::*, BufWriter},
     path::Path,
 };
 use std::{fs::File, os::unix::prelude::MetadataExt};
-use std::{hash::Hasher, io::BufReader};
 mod config;
+mod hash;
 fn main() -> std::io::Result<()> {
     let args: Vec<String> = std::env::args().collect();
     let default_filename = String::from("urls.10G.txt");
@@ -45,21 +46,15 @@ fn split_file<P: AsRef<Path>>(input: P) -> std::io::Result<u64> {
         let f = File::create(format!("data/url{}", i))?;
         file_handles.push(BufWriter::with_capacity(buffer_size, f));
     }
-    let mut reader = BufReader::with_capacity(config::READ_BUFFER_SIZE, f);
-    loop {
-        let mut buf: Vec<u8> = Vec::new();
-        let len = reader.read_until(b'\n', &mut buf)?;
-        if len == 0 {
-            break;
-        }
-        let mut hasher = AHasher::default();
-        hasher.write(&buf);
-        let hash = hasher.finish();
+    let reader = BufReader::with_capacity(config::READ_BUFFER_SIZE, f);
+    reader.split(b'\n').for_each(|f| {
+        let buf = f.unwrap();
+        let hash = hash::hash(&buf);
         let bucket_number = hash % slice_count;
         let writer = &mut file_handles[bucket_number as usize];
-        writer.write_all(&buf)?;
-    }
-
+        let _err = writer.write_all(&buf);
+        let _err = writer.write_all(b"\n");
+    });
     Ok(slice_count)
 }
 
