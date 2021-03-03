@@ -11,3 +11,4 @@ ahash = "0.7"
 
 [profile.release]
 lto = true
+target-cpu = "native"
