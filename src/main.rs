@@ -86,15 +86,11 @@ fn read_and_process_pieces(slice_count: u64) -> std::io::Result<UrlHeap> {
 /// It returns a heap containing top `TOP_URL_COUNT` urls in this piece.
 fn process_piece(reader: &mut BufReader<File>) -> std::io::Result<UrlHeap> {
     let mut map: AHashMap<Vec<u8>, usize> = AHashMap::new();
-    loop {
-        let mut buf: Vec<u8> = Vec::new();
-        let len = reader.read_until(b'\n', &mut buf)?;
-        if len == 0 {
-            break;
-        }
+    reader.split(b'\n').for_each(|f| {
+        let buf = f.unwrap();
         let cnt = map.entry(buf).or_insert(0);
         *cnt += 1;
-    }
+    });
     let mut heap: UrlHeap = BinaryHeap::new();
     for (k, v) in map.drain() {
         // drain the map to avoid unnecessary data copy
