@@ -8,6 +8,8 @@ edition = "2018"
 
 [dependencies]
 ahash = "0.7"
+rayon = "1.5"
 
 [profile.release]
 lto = true
+# debug = true
